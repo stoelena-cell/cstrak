@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CS Order Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c28;
+    --border: #2a2a3d;
+    --accent: #00e5a0;
+    --accent2: #ff6b6b;
+    --accent3: #6b8eff;
+    --text: #e8e8f0;
+    --muted: #6b6b85;
+    --gold: #ffd166;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    padding: 0 0 60px;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  header h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--accent);
+  }
+  header span { color: var(--muted); font-size: 0.75rem; }
+
+  /* WEEK NAV */
+  .week-nav {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px 40px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .week-nav button {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    border-radius: 4px;
+  }
+  .week-nav button:hover { border-color: var(--accent); color: var(--accent); }
+  .week-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    min-width: 200px;
+    text-align: center;
+  }
+  .week-range { font-size: 0.7rem; color: var(--muted); text-align: center; }
+
+  /* MAIN LAYOUT */
+  main { padding: 30px 40px; max-width: 1400px; margin: 0 auto; }
+
+  /* STAT CARDS */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .stat-card.green::before { background: var(--accent); }
+  .stat-card.red::before { background: var(--accent2); }
+  .stat-card.blue::before { background: var(--accent3); }
+  .stat-card.gold::before { background: var(--gold); }
+  .stat-label { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+  .stat-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+  .stat-card.green .stat-value { color: var(--accent); }
+  .stat-card.red .stat-value { color: var(--accent2); }
+  .stat-card.blue .stat-value { color: var(--accent3); }
+  .stat-card.gold .stat-value { color: var(--gold); }
+  .stat-sub { font-size: 0.7rem; color: var(--muted); margin-top: 6px; }
+
+  /* SECTION TITLE */
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* TABLE */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 32px;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { background: var(--surface2); border-bottom: 1px solid var(--border); }
+  th {
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 500;
+  }
+  th.num { text-align: right; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--surface2); }
+  td { padding: 13px 16px; font-size: 0.82rem; vertical-align: middle; }
+  td.num { text-align: right; font-feature-settings: 'tnum'; }
+
+  .agent-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .avatar {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.65rem;
+    font-weight: 700;
+    font-family: 'Syne', sans-serif;
+    flex-shrink: 0;
+  }
+
+  /* PROGRESS BAR */
+  .bar-wrap { display: flex; align-items: center; gap: 10px; }
+  .bar-bg {
+    flex: 1; height: 6px;
+    background: var(--surface2);
+    border-radius: 3px;
+    overflow: hidden;
+    min-width: 80px;
+  }
+  .bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+  .bar-pct { font-size: 0.75rem; color: var(--text); min-width: 36px; text-align: right; }
+
+  /* ERRORS */
+  .err-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 2px 9px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    min-width: 28px;
+  }
+  .err-0 { background: rgba(0,229,160,0.12); color: var(--accent); }
+  .err-low { background: rgba(255,209,102,0.12); color: var(--gold); }
+  .err-mid { background: rgba(255,107,107,0.12); color: var(--accent2); }
+  .err-high { background: rgba(255,107,107,0.25); color: var(--accent2); border: 1px solid rgba(255,107,107,0.4); }
+
+  /* FORM MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    width: 480px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 28px 32px;
+    animation: slideUp 0.2s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .modal h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 800;
+    margin-bottom: 22px;
+    color: var(--accent);
+  }
+  .form-group { margin-bottom: 16px; }
+  label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); display: block; margin-bottom: 6px; }
+  input, select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.85rem;
+    padding: 9px 12px;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input:focus, select:focus { border-color: var(--accent); }
+  select option { background: var(--surface2); }
+
+  .btn {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    padding: 9px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-ghost:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  .actions-row {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 28px;
+    gap: 12px;
+  }
+  .actions-left { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  /* ADD AGENT */
+  .btn-add-agent {
+    background: transparent;
+    border: 1px dashed var(--border);
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    padding: 9px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-add-agent:hover { border-color: var(--accent3); color: var(--accent3); }
+
+  .delete-btn {
+    background: none; border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: color 0.15s;
+  }
+  .delete-btn:hover { color: var(--accent2); }
+
+  .edit-btn {
+    background: none; border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: color 0.15s;
+  }
+  .edit-btn:hover { color: var(--accent3); }
+
+  /* RANK BADGE */
+  .rank { font-size: 0.7rem; color: var(--muted); }
+  .rank-1 { color: var(--gold); font-weight: 700; }
+
+  /* EMPTY STATE */
+  .empty-row td { text-align: center; color: var(--muted); padding: 40px; font-size: 0.8rem; }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    main { padding: 20px; }
+    header { padding: 16px 20px; }
+    .week-nav { padding: 16px 20px; }
+    .stats-row { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 600px) {
+    .stats-row { grid-template-columns: 1fr; }
+  }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+
+  .chip {
+    display: inline-block;
+    font-size: 0.65rem;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⬡ CS TRACKER</h1>
+  <span id="today-date"></span>
+</header>
+
+<div class="week-nav">
+  <button onclick="changeWeek(-1)">← Săptămâna anterioară</button>
+  <div>
+    <div class="week-label" id="week-label">Săptămâna 1</div>
+    <div class="week-range" id="week-range"></div>
+  </div>
+  <button onclick="changeWeek(1)">Săptămâna următoare →</button>
+</div>
+
+<main>
+  <div class="stats-row">
+    <div class="stat-card green">
+      <div class="stat-label">Total comenzi procesate</div>
+      <div class="stat-value" id="total-orders">0</div>
+      <div class="stat-sub" id="avg-orders-day">—</div>
+    </div>
+    <div class="stat-card blue">
+      <div class="stat-label">Total linii procesate</div>
+      <div class="stat-value" id="total-lines">0</div>
+      <div class="stat-sub" id="avg-lines-order">—</div>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-label">Total greșeli</div>
+      <div class="stat-value" id="total-errors">0</div>
+      <div class="stat-sub" id="error-rate">Rată eroare: —</div>
+    </div>
+    <div class="stat-card gold">
+      <div class="stat-label">Agenți activi</div>
+      <div class="stat-value" id="total-agents">0</div>
+      <div class="stat-sub">în această săptămână</div>
+    </div>
+  </div>
+
+  <div class="actions-row">
+    <div class="actions-left">
+      <button class="btn" onclick="openAddEntry()">+ Adaugă intrare</button>
+      <button class="btn-add-agent" onclick="openAddAgent()">+ Agent nou</button>
+    </div>
+    <div>
+      <span class="chip" id="week-chip">S1 / 2025</span>
+    </div>
+  </div>
+
+  <div class="section-title">Performanță per agent</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Agent</th>
+          <th class="num">Comenzi</th>
+          <th class="num">Linii</th>
+          <th>% din total comenzi</th>
+          <th>% din total linii</th>
+          <th class="num">Greșeli</th>
+          <th class="num">Rată eroare</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="agents-tbody">
+        <tr class="empty-row"><td colspan="9">Nu există date pentru această săptămână. Adaugă o intrare!</td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<!-- MODAL: Add/Edit Entry -->
+<div class="modal-overlay" id="entry-modal">
+  <div class="modal">
+    <h2 id="entry-modal-title">Adaugă intrare</h2>
+    <div class="form-group">
+      <label>Agent</label>
+      <select id="entry-agent"></select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Nr. comenzi procesate</label>
+        <input type="number" id="entry-orders" min="0" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Nr. linii procesate</label>
+        <input type="number" id="entry-lines" min="0" placeholder="0">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Nr. greșeli</label>
+      <input type="number" id="entry-errors" min="0" placeholder="0">
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeModal('entry-modal')">Anulează</button>
+      <button class="btn" onclick="saveEntry()">Salvează</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Add Agent -->
+<div class="modal-overlay" id="agent-modal">
+  <div class="modal">
+    <h2>Agent nou</h2>
+    <div class="form-group">
+      <label>Nume complet</label>
+      <input type="text" id="agent-name-input" placeholder="ex. Ion Popescu">
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeModal('agent-modal')">Anulează</button>
+      <button class="btn" onclick="saveAgent()">Adaugă agent</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---- STATE ----
+let state = {
+  agents: [
+    { id: 'a1', name: 'Ana Ionescu', color: '#00e5a0' },
+    { id: 'a2', name: 'Mihai Popescu', color: '#6b8eff' },
+    { id: 'a3', name: 'Elena Dumitrescu', color: '#ff6b6b' },
+    { id: 'a4', name: 'Andrei Constantin', color: '#ffd166' },
+  ],
+  weeks: {},
+  currentWeekOffset: 0,
+};
+
+let editingEntry = null; // { weekKey, agentId }
+
+// ---- WEEK UTILS ----
+function getWeekKey(offset = 0) {
+  const now = new Date();
+  const day = now.getDay() || 7;
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - day + 1 + offset * 7);
+  const y = monday.getFullYear();
+  const m = String(monday.getMonth()+1).padStart(2,'0');
+  const d = String(monday.getDate()).padStart(2,'0');
+  return `${y}-${m}-${d}`;
+}
+
+function getWeekRange(offset = 0) {
+  const now = new Date();
+  const day = now.getDay() || 7;
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - day + 1 + offset * 7);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  const fmt = d => d.toLocaleDateString('ro-RO', {day:'2-digit', month:'short'});
+  return `${fmt(monday)} — ${fmt(sunday)} ${sunday.getFullYear()}`;
+}
+
+function getWeekNumber(offset = 0) {
+  const now = new Date();
+  const day = now.getDay() || 7;
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - day + 1 + offset * 7);
+  const startOfYear = new Date(monday.getFullYear(), 0, 1);
+  const wn = Math.ceil(((monday - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
+  return { wn, year: monday.getFullYear() };
+}
+
+function changeWeek(delta) {
+  state.currentWeekOffset += delta;
+  render();
+}
+
+// ---- AVATAR ----
+function initials(name) {
+  return name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+}
+
+// ---- COLORS (auto) ----
+const COLORS = ['#00e5a0','#6b8eff','#ff6b6b','#ffd166','#c084fc','#38bdf8','#fb923c','#a3e635'];
+function agentColor(idx) { return COLORS[idx % COLORS.length]; }
+
+// ---- RENDER ----
+function render() {
+  const o = state.currentWeekOffset;
+  const wk = getWeekKey(o);
+  const { wn, year } = getWeekNumber(o);
+  const range = getWeekRange(o);
+
+  document.getElementById('week-label').textContent = `Săptămâna ${wn}`;
+  document.getElementById('week-range').textContent = range;
+  document.getElementById('week-chip').textContent = `S${wn} / ${year}`;
+  document.getElementById('today-date').textContent = new Date().toLocaleDateString('ro-RO', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+
+  const weekData = state.weeks[wk] || {};
+  const agents = state.agents;
+
+  let totalOrders = 0, totalLines = 0, totalErrors = 0, activeAgents = 0;
+  agents.forEach(a => {
+    const d = weekData[a.id];
+    if (d && (d.orders > 0 || d.lines > 0)) {
+      totalOrders += d.orders || 0;
+      totalLines += d.lines || 0;
+      totalErrors += d.errors || 0;
+      activeAgents++;
+    }
+  });
+
+  document.getElementById('total-orders').textContent = totalOrders.toLocaleString('ro-RO');
+  document.getElementById('total-lines').textContent = totalLines.toLocaleString('ro-RO');
+  document.getElementById('total-errors').textContent = totalErrors;
+  document.getElementById('total-agents').textContent = activeAgents;
+  document.getElementById('avg-orders-day').textContent = activeAgents > 0 ? `~${Math.round(totalOrders/5)} comenzi/zi (est.)` : '—';
+  document.getElementById('avg-lines-order').textContent = totalOrders > 0 ? `${(totalLines/totalOrders).toFixed(1)} linii/comandă` : '—';
+  document.getElementById('error-rate').textContent = totalOrders > 0 ? `Rată eroare: ${((totalErrors/totalOrders)*100).toFixed(2)}%` : 'Rată eroare: —';
+
+  // Sort agents by orders desc
+  const sorted = [...agents].map((a,i) => {
+    const d = weekData[a.id] || { orders:0, lines:0, errors:0 };
+    return { ...a, ...d, colorIdx: i };
+  }).sort((a,b) => (b.orders||0) - (a.orders||0));
+
+  const tbody = document.getElementById('agents-tbody');
+  if (sorted.length === 0 || sorted.every(a => !a.orders && !a.lines)) {
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="9">Nu există date pentru această săptămână. Adaugă o intrare!</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = sorted.map((a, idx) => {
+    const orders = a.orders || 0;
+    const lines = a.lines || 0;
+    const errors = a.errors || 0;
+    const pctOrders = totalOrders > 0 ? ((orders/totalOrders)*100).toFixed(1) : '0.0';
+    const pctLines = totalLines > 0 ? ((lines/totalLines)*100).toFixed(1) : '0.0';
+    const errRate = orders > 0 ? ((errors/orders)*100).toFixed(2) : '0.00';
+    const col = a.color || agentColor(a.colorIdx);
+
+    let errClass = 'err-0';
+    if (errors >= 5) errClass = 'err-high';
+    else if (errors >= 3) errClass = 'err-mid';
+    else if (errors >= 1) errClass = 'err-low';
+
+    const rankClass = idx === 0 && orders > 0 ? 'rank rank-1' : 'rank';
+    const rankIcon = idx === 0 && orders > 0 ? '🥇' : `#${idx+1}`;
+
+    return `<tr>
+      <td><span class="${rankClass}">${rankIcon}</span></td>
+      <td>
+        <div class="agent-name">
+          <div class="avatar" style="background:${col}20;color:${col};border:1px solid ${col}40">${initials(a.name)}</div>
+          ${a.name}
+        </div>
+      </td>
+      <td class="num">${orders.toLocaleString('ro-RO')}</td>
+      <td class="num">${lines.toLocaleString('ro-RO')}</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar-bg"><div class="bar-fill" style="width:${pctOrders}%;background:${col}"></div></div>
+          <span class="bar-pct">${pctOrders}%</span>
+        </div>
+      </td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar-bg"><div class="bar-fill" style="width:${pctLines}%;background:${col}80"></div></div>
+          <span class="bar-pct">${pctLines}%</span>
+        </div>
+      </td>
+      <td class="num"><span class="err-badge ${errClass}">${errors}</span></td>
+      <td class="num" style="font-size:0.75rem;color:var(--muted)">${errRate}%</td>
+      <td>
+        <button class="edit-btn" onclick="openEditEntry('${a.id}')" title="Editează">✎</button>
+        <button class="delete-btn" onclick="deleteEntry('${a.id}')" title="Șterge">✕</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ---- MODAL HELPERS ----
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if(e.target === el) el.classList.remove('open'); });
+});
+
+// ---- ADD/EDIT ENTRY ----
+function openAddEntry() {
+  editingEntry = null;
+  document.getElementById('entry-modal-title').textContent = 'Adaugă intrare';
+  document.getElementById('entry-orders').value = '';
+  document.getElementById('entry-lines').value = '';
+  document.getElementById('entry-errors').value = '';
+  populateAgentSelect();
+  openModal('entry-modal');
+}
+
+function openEditEntry(agentId) {
+  editingEntry = agentId;
+  const wk = getWeekKey(state.currentWeekOffset);
+  const d = (state.weeks[wk] || {})[agentId] || {};
+  document.getElementById('entry-modal-title').textContent = 'Editează intrare';
+  populateAgentSelect(agentId);
+  document.getElementById('entry-orders').value = d.orders || '';
+  document.getElementById('entry-lines').value = d.lines || '';
+  document.getElementById('entry-errors').value = d.errors || '';
+  openModal('entry-modal');
+}
+
+function populateAgentSelect(selectedId) {
+  const sel = document.getElementById('entry-agent');
+  sel.innerHTML = state.agents.map(a =>
+    `<option value="${a.id}" ${a.id === selectedId ? 'selected' : ''}>${a.name}</option>`
+  ).join('');
+  if (editingEntry) sel.disabled = true;
+  else sel.disabled = false;
+}
+
+function saveEntry() {
+  const agentId = document.getElementById('entry-agent').value;
+  const orders = parseInt(document.getElementById('entry-orders').value) || 0;
+  const lines = parseInt(document.getElementById('entry-lines').value) || 0;
+  const errors = parseInt(document.getElementById('entry-errors').value) || 0;
+  const wk = getWeekKey(state.currentWeekOffset);
+  if (!state.weeks[wk]) state.weeks[wk] = {};
+  state.weeks[wk][agentId] = { orders, lines, errors };
+  closeModal('entry-modal');
+  saveState();
+  render();
+}
+
+function deleteEntry(agentId) {
+  const wk = getWeekKey(state.currentWeekOffset);
+  if (state.weeks[wk]) delete state.weeks[wk][agentId];
+  saveState();
+  render();
+}
+
+// ---- ADD AGENT ----
+function openAddAgent() {
+  document.getElementById('agent-name-input').value = '';
+  openModal('agent-modal');
+}
+
+function saveAgent() {
+  const name = document.getElementById('agent-name-input').value.trim();
+  if (!name) return;
+  const id = 'a' + Date.now();
+  const colorIdx = state.agents.length;
+  state.agents.push({ id, name, color: agentColor(colorIdx) });
+  closeModal('agent-modal');
+  saveState();
+  render();
+}
+
+// ---- PERSIST ----
+function saveState() {
+  try { localStorage.setItem('cs-tracker-state', JSON.stringify(state)); } catch(e){}
+}
+function loadState() {
+  try {
+    const s = localStorage.getItem('cs-tracker-state');
+    if (s) state = JSON.parse(s);
+  } catch(e){}
+}
+
+// ---- INIT ----
+loadState();
+render();
+</script>
+</body>
+</html>
